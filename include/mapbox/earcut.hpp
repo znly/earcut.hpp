@@ -22,7 +22,9 @@ namespace detail {
 template <typename N = uint32_t>
 class Earcut {
 public:
-    std::vector<N> indices;
+    Earcut(std::vector<uint8_t> &indices, N offset = 0) : indices(indices), offset(offset) {}
+    N offset;
+    std::vector<uint8_t> &indices;
     std::size_t vertices = 0;
 
     template <typename Polygon>
@@ -131,7 +133,6 @@ private:
 template <typename N> template <typename Polygon>
 void Earcut<N>::operator()(const Polygon& points) {
     // reset
-    indices.clear();
     vertices = 0;
 
     if (points.empty()) return;
@@ -148,7 +149,6 @@ void Earcut<N>::operator()(const Polygon& points) {
 
     //estimate size of nodes and indices
     nodes.reset(len * 3 / 2);
-    indices.reserve(len + points[0].size());
 
     Node* outerNode = linkedList(points[0], true);
     if (!outerNode || outerNode->prev == outerNode->next) return;
@@ -267,9 +267,13 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
 
         if (hashing ? isEarHashed(ear) : isEar(ear)) {
             // cut off the triangle
-            indices.emplace_back(prev->i);
-            indices.emplace_back(ear->i);
-            indices.emplace_back(next->i);
+//            indices.emplace_back(prev->i);
+//            indices.emplace_back(ear->i);
+//            indices.emplace_back(next->i);
+
+            uint32_t to_add[3] = {prev->i + offset, ear->i + offset, next->i + offset};
+            auto start_address = reinterpret_cast<uint8_t *>(to_add);
+            indices.insert(indices.end(), start_address, start_address + 3 * sizeof(uint32_t));
 
             removeNode(ear);
 
@@ -373,9 +377,13 @@ Earcut<N>::cureLocalIntersections(Node* start) {
 
         // a self-intersection where edge (v[i-1],v[i]) intersects (v[i+1],v[i+2])
         if (!equals(a, b) && intersects(a, p, p->next, b) && locallyInside(a, b) && locallyInside(b, a)) {
-            indices.emplace_back(a->i);
-            indices.emplace_back(p->i);
-            indices.emplace_back(b->i);
+//            indices.emplace_back(a->i);
+//            indices.emplace_back(p->i);
+//            indices.emplace_back(b->i);
+
+            uint32_t to_add[3] = {a->i + offset, p->i + offset, b->i + offset};
+            auto start_address = reinterpret_cast<uint8_t *>(to_add);
+            indices.insert(indices.end(), start_address, start_address + 3 * sizeof(uint32_t));
 
             // remove two nodes involved
             removeNode(p);
@@ -767,8 +775,8 @@ void Earcut<N>::removeNode(Node* p) {
 }
 
 template <typename N = uint32_t, typename Polygon>
-std::vector<N> earcut(const Polygon& poly) {
-    mapbox::detail::Earcut<N> earcut;
+std::vector<N> earcut(const Polygon& poly, std::vector<uint8_t> &container, N offset = 0) {
+    mapbox::detail::Earcut<N> earcut(container, offset);
     earcut(poly);
     return std::move(earcut.indices);
 }
