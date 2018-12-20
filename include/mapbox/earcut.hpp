@@ -22,9 +22,9 @@ namespace detail {
 template <typename N = uint32_t>
 class Earcut {
 public:
-    Earcut(std::vector<uint8_t> &indices, N offset = 0) : indices(indices), offset(offset) {}
+    Earcut(N offset = 0) : offset(offset) {}
     N offset;
-    std::vector<uint8_t> &indices;
+    std::vector<uint8_t> indices;
     std::size_t vertices = 0;
 
     template <typename Polygon>
@@ -776,7 +776,7 @@ void Earcut<N>::removeNode(Node* p) {
 
 template <typename N = uint32_t, typename Polygon>
 std::vector<N> earcut(const Polygon& poly, std::vector<uint8_t> &container, N offset = 0) {
-    mapbox::detail::Earcut<N> earcut(container, offset);
+    mapbox::detail::Earcut<N> earcut(offset);
     earcut(poly);
     return std::move(earcut.indices);
 }
