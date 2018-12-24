@@ -23,7 +23,7 @@ template <typename N = uint32_t>
 class Earcut {
 public:
     Earcut(std::vector<uint8_t> &_indices_buffer) : indices_buffer(_indices_buffer) {}
-    N indice_offset;
+    N indice_offset = 0;
     std::vector<uint8_t> &indices_buffer;
     std::size_t vertices = 0;
 
@@ -134,6 +134,7 @@ template <typename N> template <typename Polygon>
 void Earcut<N>::operator()(const Polygon& points) {
     // reset
     vertices = 0;
+    size_t total_size = 0;
 
     if (points.empty()) return;
 
@@ -142,10 +143,20 @@ void Earcut<N>::operator()(const Polygon& points) {
     int threshold = 80;
     std::size_t len = 0;
 
-    for (size_t i = 0; threshold >= 0 && i < points.size(); i++) {
+    size_t i = 0;
+
+    while (threshold >= 0 && i < points.size()) {
         threshold -= static_cast<int>(points[i].size());
         len += points[i].size();
+        ++i;
     }
+    total_size = len;
+    while (i < points.size()) {
+        total_size += points[i].size();
+        ++i;
+    }
+
+
 
     //estimate size of nodes and indices
     nodes.reset(len * 3 / 2);
@@ -179,6 +190,7 @@ void Earcut<N>::operator()(const Polygon& points) {
     earcutLinked(outerNode);
 
     nodes.clear();
+    indice_offset += total_size;
 }
 
 // create a circular doubly linked list from polygon points in the specified winding order
