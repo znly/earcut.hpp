@@ -23,7 +23,7 @@ template <typename N = uint32_t>
 class Earcut {
 public:
     Earcut(std::vector<uint8_t> &_indices_buffer) : indices_buffer(_indices_buffer) {}
-    N indice_offset = 0;
+    uint32_t indice_offset = 0;
     std::vector<uint8_t> &indices_buffer;
     std::size_t vertices = 0;
 
@@ -278,9 +278,9 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
         next = ear->next;
 
         if (hashing ? isEarHashed(ear) : isEar(ear)) {
-            uint32_t add_indices[3] = {prev->i + indice_offset, ear->i + indice_offset, next->i + indice_offset};
+            N add_indices[3] = {prev->i + indice_offset, ear->i + indice_offset, next->i + indice_offset};
             auto start_address = reinterpret_cast<uint8_t *>(add_indices);
-            indices_buffer.insert(indices_buffer.end(), start_address, start_address + 3 * sizeof(uint32_t));
+            indices_buffer.insert(indices_buffer.end(), start_address, start_address + sizeof(add_indices));
 
             removeNode(ear);
 
@@ -384,9 +384,9 @@ Earcut<N>::cureLocalIntersections(Node* start) {
 
         // a self-intersection where edge (v[i-1],v[i]) intersects (v[i+1],v[i+2])
         if (!equals(a, b) && intersects(a, p, p->next, b) && locallyInside(a, b) && locallyInside(b, a)) {
-            uint32_t add_indices[3] = {a->i + indice_offset, p->i + indice_offset, b->i + indice_offset};
+            N add_indices[3] = {a->i + indice_offset, p->i + indice_offset, b->i + indice_offset};
             auto start_address = reinterpret_cast<uint8_t *>(add_indices);
-            indices_buffer.insert(indices_buffer.end(), start_address, start_address + 3 * sizeof(uint32_t));
+            indices_buffer.insert(indices_buffer.end(), start_address, start_address + sizeof(add_indices));
 
             // remove two nodes involved
             removeNode(p);
