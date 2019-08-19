@@ -22,9 +22,9 @@ namespace detail {
 template <typename N = uint32_t>
 class Earcut {
 public:
-    Earcut(std::vector<uint8_t> &_indices_buffer) : indices_buffer(_indices_buffer) {}
+    Earcut(std::vector<N> &_indices_buffer) : indices_buffer(_indices_buffer) {}
     uint32_t indice_offset = 0;
-    std::vector<uint8_t> &indices_buffer;
+    std::vector<N> &indices_buffer;
     std::size_t vertices = 0;
 
     template <typename Polygon>
@@ -278,9 +278,8 @@ void Earcut<N>::earcutLinked(Node* ear, int pass) {
         next = ear->next;
 
         if (hashing ? isEarHashed(ear) : isEar(ear)) {
-            N add_indices[3] = {prev->i + indice_offset, ear->i + indice_offset, next->i + indice_offset};
-            auto start_address = reinterpret_cast<uint8_t *>(add_indices);
-            indices_buffer.insert(indices_buffer.end(), start_address, start_address + sizeof(add_indices));
+            std::array<N, 3> add_indices = {prev->i + indice_offset, ear->i + indice_offset, next->i + indice_offset};
+            indices_buffer.insert(indices_buffer.end(), add_indices.begin(), add_indices.end());
 
             removeNode(ear);
 
@@ -384,9 +383,8 @@ Earcut<N>::cureLocalIntersections(Node* start) {
 
         // a self-intersection where edge (v[i-1],v[i]) intersects (v[i+1],v[i+2])
         if (!equals(a, b) && intersects(a, p, p->next, b) && locallyInside(a, b) && locallyInside(b, a)) {
-            N add_indices[3] = {a->i + indice_offset, p->i + indice_offset, b->i + indice_offset};
-            auto start_address = reinterpret_cast<uint8_t *>(add_indices);
-            indices_buffer.insert(indices_buffer.end(), start_address, start_address + sizeof(add_indices));
+            std::array<N, 3> add_indices = {a->i + indice_offset, p->i + indice_offset, b->i + indice_offset};
+            indices_buffer.insert(indices_buffer.end(), add_indices.begin(), add_indices.end());
 
             // remove two nodes involved
             removeNode(p);
